@@ -1,1 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <title>Horizon Maps 3D</title>
+
+  <!-- Google Maps 3D -->
+  <script
+    async
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCa_YHIKbZ_yN57cAKFpalNmSNRJBG7_MI&v=beta&libraries=maps3d">
+  </script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #080b12;
+    }
+
+    /* =========================
+       MAP
+    ========================= */
+
+    gmp-map-3d {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* =========================
+       TOP BRAND
+    ========================= */
+
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 18px;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .brand {
+      width: fit-content;
+      padding: 12px 17px;
+      border-radius: 18px;
+      background: rgba(10, 14, 22, 0.82);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 1px solid rgba(255,255,255,0.12);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+    }
+
+    .brand h1 {
+      color: white;
+      font-size: 19px;
+      letter-spacing: 1.5px;
+      font-weight: 800;
+    }
+
+    .brand p {
+      color: #9da6b8;
+      font-size: 11px;
+      margin-top: 3px;
+      letter-spacing: 0.8px;
+    }
+
+    /* =========================
+       SEARCH
+    ========================= */
+
+    .search-container {
+      position: fixed;
+      top: 82px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(92%, 520px);
+      z-index: 10;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 8px 7px 15px;
+      border-radius: 18px;
+      background: rgba(12,16,25,0.88);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255,255,255,0.12);
+      box-shadow: 0 10px 35px rgba(0,0,0,0.28);
+    }
+
+    .search-icon {
+      font-size: 18px;
+    }
+
+    .search-box input {
+      flex: 1;
+      min-width: 0;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: white;
+      font-size: 15px;
+    }
+
+    .search-box input::placeholder {
+      color: #8b94a5;
+    }
+
+    .search-btn {
+      border: none;
+      cursor: pointer;
+      padding: 11px 15px;
+      border-radius: 13px;
+      background: white;
+      color: #111;
+      font-weight: 700;
+    }
+
+    .search-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* =========================
+       RIGHT CONTROLS
+    ========================= */
+
+    .controls {
+      position: fixed;
+      right: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .control-btn {
+      width: 48px;
+      height: 48px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 15px;
+      background: rgba(10,14,22,0.82);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      box-shadow: 0 7px 25px rgba(0,0,0,0.25);
+    }
+
+    .control-btn:active {
+      transform: scale(0.92);
+    }
+
+    /* =========================
+       BOTTOM PANEL
+    ========================= */
+
+    .bottom-panel {
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(94%, 620px);
+      z-index: 10;
+      padding: 13px;
+      border-radius: 22px;
+      background: rgba(10,14,22,0.88);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255,255,255,0.12);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+    }
+
+    .mode-title {
+      color: #9da6b8;
+      font-size: 11px;
+      margin: 0 0 9px 4px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .modes {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .mode {
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.06);
+      color: white;
+      padding: 12px 5px;
+      border-radius: 14px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .mode.active {
+      background: rgba(255,255,255,0.16);
+      border-color: rgba(255,255,255,0.25);
+    }
+
+    .mode span {
+      display: block;
+      font-size: 20px;
+      margin-bottom: 3px;
+    }
+
+    /* =========================
+       STATUS
+    ========================= */
+
+    .status {
+      position: fixed;
+      bottom: 150px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+
+      color: white;
+      background: rgba(10,14,22,0.82);
+      backdrop-filter: blur(12px);
+      padding: 9px 14px;
+      border-radius: 13px;
+      font-size: 12px;
+
+      opacity: 0;
+      pointer-events: none;
+      transition: 0.3s;
+    }
+
+    .status.show {
+      opacity: 1;
+    }
+
+    /* =========================
+       MOBILE
+    ========================= */
+
+    @media (max-width: 600px) {
+
+      .top-bar {
+        padding: 12px;
+      }
+
+      .brand {
+        padding: 10px 13px;
+        border-radius: 15px;
+      }
+
+      .brand h1 {
+        font-size: 15px;
+      }
+
+      .brand p {
+        font-size: 9px;
+      }
+
+      .search-container {
+        top: 70px;
+      }
+
+      .search-box {
+        border-radius: 15px;
+      }
+
+      .controls {
+        right: 12px;
+      }
+
+      .control-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+      }
+
+      .bottom-panel {
+        bottom: 10px;
+        width: calc(100% - 20px);
+        border-radius: 19px;
+      }
+
+      .status {
+        bottom: 145px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- =========================
+       3D GOOGLE MAP
+  ========================= -->
+
+  <gmp-map-3d
+    id="map3d"
+    center="12.9716,77.5946"
+    range="3000"
+    tilt="55"
+    heading="0"
+    mode="hybrid">
+  </gmp-map-3d>
+
+
+  <!-- =========================
+       BRAND
+  ========================= -->
+
+  <div class="top-bar">
+    <div class="brand">
+      <h1>HORIZON MAPS 3D</h1>
+      <p>EXPLORE • NAVIGATE • DISCOVER</p>
+    </div>
+  </div>
+
+
+  <!-- =========================
+       SEARCH
+  ========================= -->
+
+  <div class="search-container">
+
+    <div class="search-box">
+
+      <div class="search-icon">🔍</div>
+
+      <input
+        id="searchInput"
+        type="text"
+        placeholder="Where do you want to go?"
+        autocomplete="off"
+      >
+
+      <button
+        class="search-btn"
+        onclick="searchPlace()">
+        GO
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       RIGHT CONTROLS
+  ========================= -->
+
+  <div class="controls">
+
+    <button
+      class="control-btn"
+      onclick="locateMe()"
+      title="My location">
+      📍
+    </button>
+
+    <button
+      class="control-btn"
+      onclick="resetView()"
+      title="Reset view">
+      🧭
+    </button>
+
+    <button
+      class="control-btn"
+      onclick="tiltMap()"
+      title="3D view">
+      🏙️
+    </button>
+
+  </div>
+
+
+  <!-- =========================
+       STATUS
+  ========================= -->
+
+  <div id="status" class="status">
+    Finding your location...
+  </div>
+
+
+  <!-- =========================
+       BOTTOM MODES
+  ========================= -->
+
+  <div class="bottom-panel">
+
+    <div class="mode-title">
+      Travel mode
+    </div>
+
+    <div class="modes">
+
+      <button
+        class="mode active"
+        onclick="setMode(this, 'drive')">
+        <span>🚗</span>
+        Drive
+      </button>
+
+      <button
+        class="mode"
+        onclick="setMode(this, 'walk')">
+        <span>🚶</span>
+        Walk
+      </button>
+
+      <button
+        class="mode"
+        onclick="setMode(this, 'bike')">
+        <span>🚲</span>
+        Bike
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <script>
+
+    /* =========================
+       GLOBALS
+    ========================= */
+
+    const map = document.getElementById("map3d");
+
+    let currentMode = "drive";
+
+    let currentLocation = null;
+
+
+    /* =========================
+       STATUS MESSAGE
+    ========================= */
+
+    function showStatus(message) {
+
+      const status = document.getElementById("status");
+
+      status.textContent = message;
+      status.classList.add("show");
+
+      setTimeout(() => {
+        status.classList.remove("show");
+      }, 2500);
+    }
+
+
+    /* =========================
+       SEARCH
+    ========================= */
+
+    function searchPlace() {
+
+      const input =
+        document.getElementById("searchInput");
+
+      const query =
+        input.value.trim();
+
+      if (!query) {
+
+        showStatus("Enter a destination first.");
+
+        return;
+      }
+
+      /*
+        Full Google Places autocomplete
+        will be added in the next version.
+
+        For now this confirms the destination
+        entered by the user.
+      */
+
+      showStatus(
+        "Searching for: " + query
+      );
+
+      console.log(
+        "Destination:",
+        query
+      );
+    }
+
+
+    /* =========================
+       ENTER KEY SEARCH
+    ========================= */
+
+    document
+      .getElementById("searchInput")
+      .addEventListener("keydown", function(event) {
+
+        if (event.key === "Enter") {
+
+          searchPlace();
+
+        }
+
+      });
+
+
+    /* =========================
+       MY LOCATION
+    ========================= */
+
+    function locateMe() {
+
+      if (!navigator.geolocation) {
+
+        showStatus(
+          "Location isn't supported."
+        );
+
+        return;
+      }
+
+      showStatus(
+        "Finding your location..."
+      );
+
+      navigator.geolocation.getCurrentPosition(
+
+        function(position) {
+
+          const latitude =
+            position.coords.latitude;
+
+          const longitude =
+            position.coords.longitude;
+
+          currentLocation = {
+            lat: latitude,
+            lng: longitude
+          };
+
+          /*
+            Move the 3D camera to the
+            user's current position.
+          */
+
+          map.center =
+            latitude + "," + longitude;
+
+          map.range = 1800;
+
+          map.tilt = 55;
+
+          showStatus(
+            "Location found 📍"
+          );
+
+        },
+
+        function(error) {
+
+          console.log(error);
+
+          showStatus(
+            "Couldn't access your location."
+          );
+
+        },
+
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 30000
+        }
+
+      );
+
+    }
+
+
+    /* =========================
+       RESET VIEW
+    ========================= */
+
+    function resetView() {
+
+      map.center =
+        "12.9716,77.5946";
+
+      map.range = 3000;
+
+      map.tilt = 55;
+
+      map.heading = 0;
+
+      showStatus(
+        "View reset"
+      );
+
+    }
+
+
+    /* =========================
+       3D TILT
+    ========================= */
+
+    function tiltMap() {
+
+      const currentTilt =
+        Number(map.tilt) || 0;
+
+      if (currentTilt < 45) {
+
+        map.tilt = 55;
+
+      } else {
+
+        map.tilt = 30;
+
+      }
+
+      showStatus(
+        "3D view adjusted"
+      );
+
+    }
+
+
+    /* =========================
+       TRAVEL MODE
+    ========================= */
+
+    function setMode(button, mode) {
+
+      document
+        .querySelectorAll(".mode")
+        .forEach(function(btn) {
+
+          btn.classList.remove("active");
+
+        });
+
+      button.classList.add("active");
+
+      currentMode = mode;
+
+      const names = {
+        drive: "Driving",
+        walk: "Walking",
+        bike: "Cycling"
+      };
+
+      showStatus(
+        names[mode] + " mode selected"
+      );
+
+      console.log(
+        "Travel mode:",
+        currentMode
+      );
+
+    }
+
+  </script>
+
+</body>
+</html>
